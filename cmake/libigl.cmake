@@ -123,6 +123,10 @@ target_link_libraries(igl_common INTERFACE Eigen3::Eigen)
 find_package(Threads REQUIRED)
 target_link_libraries(igl_common INTERFACE ${CMAKE_THREAD_LIBS_INIT})
 
+# OpenMP
+find_package(OpenMP REQUIRED)
+target_link_libraries(igl_common INTERFACE OpenMP::OpenMP_CXX)
+
 ################################################################################
 
 ## CGAL dependencies on Windows: GMP & MPFR

@@ -182,6 +182,12 @@ function(compile_igl_module module_dir)
         # This one is when using bools in adjacency matrices
         /wd4804 #'+=': unsafe use of type 'bool' in operation
       )
+    else()
+      target_compile_options(${module_libname} PRIVATE
+        -Wno-deprecated-declarations
+        -Wno-instantiation-after-specialization
+        -Wno-switch
+      )
     endif()
   else()
     add_library(${module_libname} INTERFACE)

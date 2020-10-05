@@ -122,17 +122,36 @@ IGL_INLINE void igl::opengl::MeshGL::bind_mesh()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned)*F_vbo.size(), F_vbo.data(), GL_DYNAMIC_DRAW);
 
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, vbo_tex);
-  if (dirty & MeshGL::DIRTY_TEXTURE)
-  {
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, tex_wrap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, tex_wrap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, tex_filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, tex_filter);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_u, tex_v, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex.data());
+  if (tex3D_R32F.data == nullptr) {
+    glBindTexture(GL_TEXTURE_2D, vbo_tex);
+    if (dirty & MeshGL::DIRTY_TEXTURE)
+    {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, tex_wrap);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, tex_wrap);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, tex_filter);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, tex_filter);
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_u, tex_v, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex.data());
+    }
+    glUniform1i(glGetUniformLocation(shader_mesh,"tex"), 0);
   }
-  glUniform1i(glGetUniformLocation(shader_mesh,"tex"), 0);
+  else {
+    glBindTexture(GL_TEXTURE_3D, vbo_tex);
+    if (dirty & MeshGL::DIRTY_TEXTURE)
+    {
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, tex_wrap);
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, tex_wrap);
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, tex_wrap);
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, tex_filter);
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, tex_filter);
+      // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+      // glPixelStorei(GL_UNPACK_LSB_FIRST, 1);
+
+      auto& dim = tex3D_R32F.dim;
+      glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, dim[0], dim[1], dim[2], 0, GL_RED, GL_FLOAT, tex3D_R32F.data);
+    }
+    glUniform1i(glGetUniformLocation(shader_mesh,"tex3D"), 0);
+  }
   dirty &= ~MeshGL::DIRTY_MESH;
 }
 
@@ -478,6 +497,7 @@ IGL_INLINE void igl::opengl::MeshGL::free()
 
   if (is_initialized)
   {
+    is_initialized = false;
     free(shader_mesh);
     free(shader_overlay_lines);
     free(shader_overlay_points);

@@ -20,6 +20,25 @@ namespace igl
 namespace opengl
 {
 
+template<typename T, int Dims=1>
+struct ArrayData {
+  std::array<size_t, Dims> dim{};
+  T* data{};    // non-owning pointer
+
+  void clear() {
+    for (auto i = 0; i < Dims; ++i)
+      dim[i] = 0;
+    data = nullptr;
+  }
+
+  size_t size() const {
+    size_t prod = 1;
+    for (auto d : dim)
+      prod *= d;
+    return prod;
+  }
+};
+
 class MeshGL
 {
 public:
@@ -87,12 +106,12 @@ public:
 
   // Text Rendering
   struct TextGL
-  { 
+  {
     uint32_t dirty_flag;
     GLuint vao_labels;
     GLuint vbo_labels_pos;
     GLuint vbo_labels_characters;
-    GLuint vbo_labels_offset; 
+    GLuint vbo_labels_offset;
     GLuint vbo_labels_indices;
     RowMatrixXf label_pos_vbo;
     RowMatrixXf label_char_vbo;
@@ -102,7 +121,7 @@ public:
     void free_buffers();
   };
   TextGL vertex_labels;
-  TextGL face_labels;  
+  TextGL face_labels;
   TextGL custom_labels;
   GLuint font_atlas;
 
@@ -111,6 +130,7 @@ public:
   GLint tex_filter;
   GLint tex_wrap;
   Eigen::Matrix<char,Eigen::Dynamic,1> tex;
+  ArrayData<float, 3> tex3D_R32F;
 
   Eigen::Matrix<unsigned, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> F_vbo;
   Eigen::Matrix<unsigned, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> lines_F_vbo;

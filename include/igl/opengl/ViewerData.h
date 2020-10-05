@@ -101,6 +101,9 @@ public:
     const Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic>& B,
     const Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic>& A);
 
+  IGL_INLINE void set_texture(
+    const ArrayData<float,3>& R);   // Scalar texture in range [0,1]
+
   // Set pseudo-colorable scalar data associated with the mesh.
   //
   // Inputs:
@@ -218,6 +221,7 @@ public:
   Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic> texture_G;
   Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic> texture_B;
   Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic> texture_A;
+  ArrayData<float,3> texture3D_R32F;  // note: Eigen doesn't support 3D arrays
 
   // Overlays
 

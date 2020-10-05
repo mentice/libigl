@@ -255,6 +255,7 @@ IGL_INLINE void igl::opengl::ViewerData::set_texture(
   texture_G = G;
   texture_B = B;
   texture_A = Eigen::Matrix<unsigned char,Eigen::Dynamic,Eigen::Dynamic>::Constant(R.rows(),R.cols(),255);
+  texture3D_R32F.clear();
   dirty |= MeshGL::DIRTY_TEXTURE;
 }
 
@@ -268,6 +269,14 @@ IGL_INLINE void igl::opengl::ViewerData::set_texture(
   texture_G = G;
   texture_B = B;
   texture_A = A;
+  texture3D_R32F.clear();
+  dirty |= MeshGL::DIRTY_TEXTURE;
+}
+
+IGL_INLINE void igl::opengl::ViewerData::set_texture(
+  const ArrayData<float,3>& R)
+{
+  texture3D_R32F = R;
   dirty |= MeshGL::DIRTY_TEXTURE;
 }
 
@@ -797,15 +806,22 @@ IGL_INLINE void igl::opengl::ViewerData::updateGL(
 
   if (meshgl.dirty & MeshGL::DIRTY_TEXTURE)
   {
-    meshgl.tex_u = data.texture_R.rows();
-    meshgl.tex_v = data.texture_R.cols();
-    meshgl.tex.resize(data.texture_R.size()*4);
-    for (unsigned i=0;i<data.texture_R.size();++i)
-    {
-      meshgl.tex(i*4+0) = data.texture_R(i);
-      meshgl.tex(i*4+1) = data.texture_G(i);
-      meshgl.tex(i*4+2) = data.texture_B(i);
-      meshgl.tex(i*4+3) = data.texture_A(i);
+    if (data.texture3D_R32F.data) {
+      meshgl.tex.resize(0);
+      meshgl.tex3D_R32F = data.texture3D_R32F;
+    }
+    else {
+      meshgl.tex3D_R32F.clear();
+      meshgl.tex_u = data.texture_R.rows();
+      meshgl.tex_v = data.texture_R.cols();
+      meshgl.tex.resize(data.texture_R.size()*4);
+      for (unsigned i=0;i<data.texture_R.size();++i)
+      {
+        meshgl.tex(i*4+0) = data.texture_R(i);
+        meshgl.tex(i*4+1) = data.texture_G(i);
+        meshgl.tex(i*4+2) = data.texture_B(i);
+        meshgl.tex(i*4+3) = data.texture_A(i);
+      }
     }
   }
 

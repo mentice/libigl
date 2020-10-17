@@ -685,7 +685,8 @@ namespace glfw
         core().view,
         core().proj,
         core().viewport);
-    down_mouse_z = coord[2];
+    // down_mouse_z = coord[2];
+    down_mouse_z = 0.999;   // Keep center of translation in front of camera
     down_rotation = core().trackball_angle;
 
     mouse_mode = MouseMode::Rotation;

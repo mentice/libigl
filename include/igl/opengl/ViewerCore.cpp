@@ -100,34 +100,8 @@ IGL_INLINE void igl::opengl::ViewerCore::clear_framebuffers()
   glDisable(GL_SCISSOR_TEST);
 }
 
-IGL_INLINE void igl::opengl::ViewerCore::draw(
-  ViewerData& data,
-  bool update_matrices)
+IGL_INLINE void igl::opengl::ViewerCore::update_matrices()
 {
-  using namespace std;
-  using namespace Eigen;
-
-  if (depth_test)
-    glEnable(GL_DEPTH_TEST);
-  else
-    glDisable(GL_DEPTH_TEST);
-
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  /* Bind and potentially refresh mesh/line/point data */
-  if (data.dirty)
-  {
-    data.updateGL(data, data.invert_normals, data.meshgl);
-    data.dirty = MeshGL::DIRTY_NONE;
-  }
-  data.meshgl.bind_mesh();
-
-  // Initialize uniform
-  glViewport(viewport(0), viewport(1), viewport(2), viewport(3));
-
-  if(update_matrices)
-  {
     view = Eigen::Matrix4f::Identity();
     proj = Eigen::Matrix4f::Identity();
     norm = Eigen::Matrix4f::Identity();
@@ -156,7 +130,36 @@ IGL_INLINE void igl::opengl::ViewerCore::draw(
       float fW = fH * (double)width/(double)height;
       frustum(-fW, fW, -fH, fH, camera_dnear, camera_dfar,proj);
     }
+}
+
+IGL_INLINE void igl::opengl::ViewerCore::draw(
+  ViewerData& data,
+  bool _update_matrices)
+{
+  using namespace std;
+  using namespace Eigen;
+
+  if (depth_test)
+    glEnable(GL_DEPTH_TEST);
+  else
+    glDisable(GL_DEPTH_TEST);
+
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  /* Bind and potentially refresh mesh/line/point data */
+  if (data.dirty)
+  {
+    data.updateGL(data, data.invert_normals, data.meshgl);
+    data.dirty = MeshGL::DIRTY_NONE;
   }
+  data.meshgl.bind_mesh();
+
+  // Initialize uniform
+  glViewport(viewport(0), viewport(1), viewport(2), viewport(3));
+
+  if(_update_matrices)
+    update_matrices();
 
   // Send transformations to the GPU
   GLint viewi  = glGetUniformLocation(data.meshgl.shader_mesh,"view");
@@ -243,11 +246,11 @@ IGL_INLINE void igl::opengl::ViewerCore::draw(
     glEnable(GL_DEPTH_TEST);
   }
 
-  if(is_set(data.show_vertex_labels)&&data.vertex_labels_positions.rows()>0) 
+  if(is_set(data.show_vertex_labels)&&data.vertex_labels_positions.rows()>0)
     draw_labels(data, data.meshgl.vertex_labels);
-  if(is_set(data.show_face_labels)&&data.face_labels_positions.rows()>0) 
+  if(is_set(data.show_face_labels)&&data.face_labels_positions.rows()>0)
     draw_labels(data, data.meshgl.face_labels);
-  if(is_set(data.show_custom_labels)&&data.labels_positions.rows()>0) 
+  if(is_set(data.show_custom_labels)&&data.labels_positions.rows()>0)
     draw_labels(data, data.meshgl.custom_labels);
 }
 
@@ -368,8 +371,8 @@ IGL_INLINE void igl::opengl::ViewerCore::draw_labels(
   glUniform3f(glGetUniformLocation(data.meshgl.shader_text, "TextColor"), 0, 0, 0);
   glUniform2f(glGetUniformLocation(data.meshgl.shader_text, "CellSize"), 1.0f / 16, (300.0f / 384) / 6);
   glUniform2f(glGetUniformLocation(data.meshgl.shader_text, "CellOffset"), 0.5 / 256.0, 0.5 / 256.0);
-  glUniform2f(glGetUniformLocation(data.meshgl.shader_text, "RenderSize"), 
-                                    render_scale * 0.75 * 16 / (width), 
+  glUniform2f(glGetUniformLocation(data.meshgl.shader_text, "RenderSize"),
+                                    render_scale * 0.75 * 16 / (width),
                                     render_scale * 0.75 * 33.33 / (height));
   glUniform2f(glGetUniformLocation(data.meshgl.shader_text, "RenderOrigin"), -2, 2);
   data.meshgl.draw_labels(labels);

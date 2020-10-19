@@ -69,6 +69,8 @@ public:
   // Clear the frame buffers
   IGL_INLINE void clear_framebuffers();
 
+  IGL_INLINE void update_matrices();
+
   // Draw everything
   //
   // data cannot be const because it is being set to "clean"

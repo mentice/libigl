@@ -147,6 +147,26 @@ IGL_INLINE void igl::opengl::ViewerCore::draw(
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+  int width = viewport(2) - viewport(0);
+  int height = viewport(3) - viewport(1);
+
+  GLuint depth_texture_id;
+  if (data.meshgl.tex3D_R32F.data) {  // Check for volume data
+    // Copy current depth buffer to a texture if volume data being displayed
+    glGenTextures(1, &depth_texture_id);
+    glBindTexture(GL_TEXTURE_2D, depth_texture_id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    glReadBuffer(GL_FRONT);
+    glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 0,0, width, height,0);
+
+    glActiveTexture(GL_TEXTURE1);   // frame buffer depth texture in texture unit 1
+    glBindTexture(GL_TEXTURE_2D, depth_texture_id);
+  }
+
   /* Bind and potentially refresh mesh/line/point data */
   if (data.dirty)
   {
@@ -252,6 +272,9 @@ IGL_INLINE void igl::opengl::ViewerCore::draw(
     draw_labels(data, data.meshgl.face_labels);
   if(is_set(data.show_custom_labels)&&data.labels_positions.rows()>0)
     draw_labels(data, data.meshgl.custom_labels);
+
+  if (data.meshgl.tex3D_R32F.data)
+    glDeleteTextures(1, &depth_texture_id);
 }
 
 IGL_INLINE void igl::opengl::ViewerCore::draw_buffer(ViewerData& data,

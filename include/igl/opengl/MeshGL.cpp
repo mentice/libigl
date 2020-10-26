@@ -151,6 +151,7 @@ IGL_INLINE void igl::opengl::MeshGL::bind_mesh()
       glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, dim[0], dim[1], dim[2], 0, GL_RED, GL_FLOAT, tex3D_R32F.data);
     }
     glUniform1i(glGetUniformLocation(shader_mesh,"tex3D"), 0);
+    glUniform1i(glGetUniformLocation(shader_mesh,"depth_tex"), 1);  // depth texture in sampler unit 1
   }
   dirty &= ~MeshGL::DIRTY_MESH;
 }

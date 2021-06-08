@@ -20,18 +20,18 @@ jobs:
   ####################
 
   Unix:
-    name: ${{ matrix.name }} (${{ matrix.config }}, ${{ matrix.static }})
+    name: ${{ matrix.name }} (${{ matrix.config }}, ${{ fromJSON('["Static", "HeaderOnly"]')[matrix.static == 'ON'] }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-18.04, macos-latest]
+        os: [ubuntu-20.04, macos-latest]
         config: [Release]
         static: [ON, OFF]
         include:
           - os: macos-latest
             name: macOS
-          - os: ubuntu-18.04
+          - os: ubuntu-20.04
             name: Linux
     env:
       LIBIGL_NUM_THREADS: 1  # See https://github.com/libigl/libigl/pull/996
@@ -94,6 +94,7 @@ jobs:
   ####################
 
   Windows:
+    name: Windows (${{ matrix.config }}, ${{ fromJSON('["Static", "HeaderOnly"]')[matrix.static == 'ON'] }})
     runs-on: windows-2019
     env:
       CC: cl.exe
@@ -110,11 +111,10 @@ jobs:
           fetch-depth: 10
       - uses: seanmiddleditch/gha-setup-ninja@master
 
-        # https://github.com/actions/cache/issues/101
       - name: Set env
         run: |
-          echo "::set-env name=appdata::$($env:LOCALAPPDATA)"
-          echo "::set-env name=BOOST_ROOT::$env:BOOST_ROOT_1_69_0"
+          echo "BOOST_ROOT=$env:BOOST_ROOT_1_72_0" >> ${env:GITHUB_ENV}
+          echo "appdata=$env:LOCALAPPDATA" >> ${env:GITHUB_ENV}
 
       - name: Cache build
         id: cache-build
@@ -127,8 +127,8 @@ jobs:
         run: |
           Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
           scoop install sccache --global
-          # Scoop modifies the PATH so we make the modified PATH global.
-          echo "::set-env name=PATH::$env:PATH"
+          # Scoop modifies the PATH so we make it available for the next steps of the job
+          echo "${env:PATH}" >> ${env:GITHUB_PATH}
 
         # We run configure + build in the same step, since they both need to call VsDevCmd
         # Also, cmd uses ^ to break commands into multiple lines (in powershell this is `)
@@ -142,6 +142,9 @@ jobs:
             -DLIBIGL_USE_STATIC_LIBRARY=${{ matrix.static }} ^
             -DLIBIGL_WITH_CGAL=ON ^
             -DLIBIGL_WITH_COMISO=OFF ^
+            -DCMAKE_JOB_POOLS=pool-linking=1;pool-compilation=2 ^
+            -DCMAKE_JOB_POOL_COMPILE:STRING=pool-compilation ^
+            -DCMAKE_JOB_POOL_LINK:STRING=pool-linking ^
             -B build ^
             -S .
           cmake --build build
